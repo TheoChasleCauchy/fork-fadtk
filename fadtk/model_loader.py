@@ -32,6 +32,8 @@ class ModelLoader(ABC):
         """
         self.model = None
         self.sr = sr
+        print(self.sr)
+        print("fneufnzenfuzenfuzenfui")
         self.num_features = num_features
         self.name = name
         self.min_len = min_len
@@ -258,7 +260,8 @@ class MERTModel(ModelLoader):
     Please specify the layer to use (1-12).
     """
     def __init__(self, size='v1-95M', layer=12, limit_minutes=6):
-        super().__init__(f"MERT-{size}" + ("" if layer == 12 else f"-{layer}"), 768, 24000)
+        sr = 16000 if size == 'v0-public' else 24000
+        super().__init__(f"MERT-{size}" + ("" if layer == 12 else f"-{layer}"), 768, sr)
         self.huggingface_id = f"m-a-p/MERT-{size}"
         self.layer = layer
         self.limit = limit_minutes * 60 * self.sr

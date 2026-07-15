@@ -1,5 +1,5 @@
 [project]
-name = "fadtk"
+name = "fork-fadtk"
 version = "1.1.0"
 description = "A simple and standardized library for Frechet Audio Distance calculation."
 authors = [{ name = "Azalea", email = "me@hydev.org" }]

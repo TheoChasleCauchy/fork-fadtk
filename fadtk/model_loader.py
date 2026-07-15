@@ -423,14 +423,15 @@ class CdpamModel(ModelLoader):
     """
     CDPAM model from https://github.com/pranaymanocha/PerceptualAudio/tree/master/cdpam
     """
-    def __init__(self, mode: Literal['acoustic', 'content']) -> None:
+    def __init__(self, mode: Literal['acoustic', 'content'], model_folder: str = "models/CDPAM/scratchJNDdefault_best_model.pth") -> None:
         super().__init__(f"cdpam-{mode}", 512, 22050)
         self.mode = mode
+        self.model_folder = model_folder
         assert mode in ['acoustic', 'content'], "Mode must be 'acoustic' or 'content'"
 
     def load_model(self):
         from cdpam import CDPAM
-        self.model = CDPAM(dev=self.device)
+        self.model = CDPAM(modfolder=self.model_folder, dev=self.device)
 
     def _get_embedding(self, audio: np.ndarray) -> np.ndarray:
         audio = torch.from_numpy(audio).float().to(self.device)

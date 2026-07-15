@@ -454,7 +454,7 @@ class CdpamModel(ModelLoader):
         x, _  = librosa.load(wav_file, sr=self.sr)
         
         # Convert to 16 bit floating point
-        x = np.round(x.astype(np.float) * 32768)
+        x = np.round(x.astype(float) * 32768)
         x  = np.reshape(x, [-1, 1])
         x = np.reshape(x, [1, x.shape[0]])
         x  = np.float32(x)

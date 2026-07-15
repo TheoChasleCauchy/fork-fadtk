@@ -30,6 +30,9 @@ dependencies = [
 Homepage = "https://github.com/Microsoft/fadtk"
 Repository = "https://github.com/Microsoft/fadtk"
 
+[tool.hatch.build.targets.wheel]
+packages = ["fadtk"]
+
 [project.scripts]
 fadtk = "fadtk.__main__:main"
 fadtk-embeds = "fadtk.embeds.__main__:main"
@@ -40,6 +43,3 @@ build-backend = "hatchling.build"
 
 [tool.hatch.metadata]
 allow-direct-references = true
-
-[tool.hatch.build.targets.wheel]
-packages = ["fadtk"]

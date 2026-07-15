@@ -79,9 +79,7 @@ model.load_model()
 
 audio = _load_audio(test_audio_path, sr = model.sr)
 embedding = model._get_embedding(audio)
-print(embedding.shape)
 audio_embedding = torch.mean(embedding, dim=0)
-print(audio_embedding.shape)
 
 print("------------------------------")
 print("[INFO] MERT v0-public Model Checked")
@@ -93,10 +91,22 @@ model.load_model()
 
 audio = _load_audio(test_audio_path, sr = model.sr)
 embedding = model._get_embedding(audio)
+audio_embedding = torch.mean(embedding, dim=0)
+
+print("------------------------------")
+print("[INFO] VGGish Model Checked")
+print("------------------------------")
+
+from fadtk import CdpamModel
+model = CdpamModel(mode='acoustic')
+model.load_model()
+
+audio = CdpamModel.load_wav(test_audio_path)
+embedding = model._get_embedding(audio)
 print(embedding.shape)
 audio_embedding = torch.mean(embedding, dim=0)
 print(audio_embedding.shape)
 
 print("------------------------------")
-print("[INFO] VGGish Model Checked")
+print("[INFO] Cdpam Model Checked")
 print("------------------------------")

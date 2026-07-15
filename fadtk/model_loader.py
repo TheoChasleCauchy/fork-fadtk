@@ -32,8 +32,6 @@ class ModelLoader(ABC):
         """
         self.model = None
         self.sr = sr
-        print(self.sr)
-        print("fneufnzenfuzenfuzenfui")
         self.num_features = num_features
         self.name = name
         self.min_len = min_len

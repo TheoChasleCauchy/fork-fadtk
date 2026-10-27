@@ -22,19 +22,21 @@ class ModelLoader(ABC):
     """
     Abstract class for loading a model and getting embeddings from it. The model should be loaded in the `load_model` method.
     """
-    def __init__(self, name: str, num_features: int, sr: int, min_len: int = -1):
+    def __init__(self, name: str, num_features: int, sr: int, min_len: int = -1, model_directory: Path = None):
         """
         Args:
             name (str): A unique identifier for the model.
             num_features (int): Number of features in the output embedding (dimensionality).
             sr (int): Sample rate of the audio.
             min_len (int, optional): Enforce a minimal length for the audio in seconds. Defaults to -1 (no minimum).
+            model_directory (Path, optional): Directory where the model files are stored. Defaults to None.
         """
         self.model = None
         self.sr = sr
         self.num_features = num_features
         self.name = name
         self.min_len = min_len
+        self.model_directory = model_directory
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     def get_embedding(self, audio: np.ndarray):
@@ -257,20 +259,26 @@ class MERTModel(ModelLoader):
 
     Please specify the layer to use (1-12).
     """
-    def __init__(self, size='v1-95M', layer=12, limit_minutes=6):
-        sr = 16000 if size == 'v0-public' else 24000
-        super().__init__(f"MERT-{size}" + ("" if layer == 12 else f"-{layer}"), 768, sr)
+    def __init__(self, size='v1-95M', layer=12, limit_minutes=6, model_directory: Path = None):
+        super().__init__(f"MERT-{size}" + ("" if layer == 12 else f"-{layer}"), 768, 24000, model_directory=model_directory)
         self.huggingface_id = f"m-a-p/MERT-{size}"
         self.layer = layer
         self.limit = limit_minutes * 60 * self.sr
         
     def load_model(self):
         from transformers import Wav2Vec2FeatureExtractor, AutoModel, AutoConfig
-        
-        cfg = AutoConfig.from_pretrained(self.huggingface_id, trust_remote_code=True)
+
+        if self.model_directory:
+            cfg = AutoConfig.from_pretrained(self.model_directory, trust_remote_code=True)
+        else:
+            cfg = AutoConfig.from_pretrained(self.huggingface_id, trust_remote_code=True)
         cfg.conv_pos_batch_norm = False
-        self.model = AutoModel.from_pretrained(self.huggingface_id, trust_remote_code=True, config=cfg)
-        self.processor = Wav2Vec2FeatureExtractor.from_pretrained(self.huggingface_id, trust_remote_code=True)
+        if self.model_directory:
+            self.model = AutoModel.from_pretrained(self.model_directory, trust_remote_code=True, config=cfg)
+            self.processor = Wav2Vec2FeatureExtractor.from_pretrained(self.model_directory, trust_remote_code=True)
+        else:
+            self.model = AutoModel.from_pretrained(self.huggingface_id, trust_remote_code=True, config=cfg)
+            self.processor = Wav2Vec2FeatureExtractor.from_pretrained(self.huggingface_id, trust_remote_code=True)
         # self.sr = self.processor.sampling_rate
         self.model.to(self.device)
 
@@ -423,15 +431,14 @@ class CdpamModel(ModelLoader):
     """
     CDPAM model from https://github.com/pranaymanocha/PerceptualAudio/tree/master/cdpam
     """
-    def __init__(self, mode: Literal['acoustic', 'content'], model_folder: str = "models/CDPAM/scratchJNDdefault_best_model.pth") -> None:
+    def __init__(self, mode: Literal['acoustic', 'content']) -> None:
         super().__init__(f"cdpam-{mode}", 512, 22050)
         self.mode = mode
-        self.model_folder = model_folder
         assert mode in ['acoustic', 'content'], "Mode must be 'acoustic' or 'content'"
 
     def load_model(self):
         from cdpam import CDPAM
-        self.model = CDPAM(modfolder=self.model_folder, dev=self.device)
+        self.model = CDPAM(dev=self.device)
 
     def _get_embedding(self, audio: np.ndarray) -> np.ndarray:
         audio = torch.from_numpy(audio).float().to(self.device)
@@ -454,7 +461,7 @@ class CdpamModel(ModelLoader):
         x, _  = librosa.load(wav_file, sr=self.sr)
         
         # Convert to 16 bit floating point
-        x = np.round(x.astype(float) * 32768)
+        x = np.round(x.astype(np.float) * 32768)
         x  = np.reshape(x, [-1, 1])
         x = np.reshape(x, [1, x.shape[0]])
         x  = np.float32(x)
